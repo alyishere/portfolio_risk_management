@@ -5,40 +5,6 @@ from datetime import datetime as dt
 import datetime
 from datetime import timezone
 
-def initiate_portfolio_df():
-    df = pd.read_csv('US_EQUITY_input.csv')
-    return df[['TICKER','TYPE','HOLDING','REGION']]
-
-def generate_ticker_list(portfolio_df):
-    ticker_str = ""
-    for i in portfolio_df['TICKER']:
-        ticker_str = ticker_str + "," + i 
-
-    ticker_list = ticker_str[1:]
-    return ticker_list
-
-def generate_current_quote(ticker_list):
-    token = open('tradier_token.txt','r').read()
-    response = requests.get('https://sandbox.tradier.com/v1/markets/quotes',
-        params={'symbols': ticker_list, 'greeks': 'false'},
-        headers={'Authorization': 'Bearer '+token, 'Accept': 'application/json'}
-    )
-    json_response = response.json()
-    current_quote_df = pd.DataFrame(json_response['quotes']['quote'])[['symbol','last']].rename({'symbol':'TICKER','last':'CURRENT_QUOTE'},axis = 1).drop_duplicates() 
-    return current_quote_df
-
-def combine_current_quote(portfolio_df,current_quote_df):
-    combined_df = pd.merge(portfolio_df,current_quote_df,how="inner",on="TICKER")
-    combined_df['MARKET_VALUE'] = combined_df['HOLDING'] * combined_df['CURRENT_QUOTE'] 
-    return combined_df
-
-def generate_portfolio_view1():
-    portfolio_df = initiate_portfolio_df()
-    current_quote_df = generate_current_quote(generate_ticker_list(portfolio_df))
-    combined_df = combine_current_quote(portfolio_df,current_quote_df)
-    return combined_df[['TICKER','TYPE','REGION','HOLDING','CURRENT_QUOTE','MARKET_VALUE']]
-
-
 def gather_historical_quote(holding_table,days):
 
     end_date = dt.today()
@@ -65,11 +31,24 @@ def generate_price_table(df):
         price_table = pd.concat([price_table,current_df],sort=True)
     return price_table
 
-def US_EQUITY_collection():
-    holding_table = generate_portfolio_view1()
-    holding_table.to_csv("US_EQUITY_holding_table.csv")
-    print("US_EQUITY_holding_table generated.")
+def generate_return_table(price_table):
+    
+    price_table['date'] = price_table['date'].astype('datetime64') 
 
-    updated_table = gather_historical_quote(holding_table,730)
-    generate_price_table(updated_table).to_csv("US_EQUITY_price_table.csv")
+    def calculate_return(df):
+        df['return'] = (df['close']/df['close'].shift(1)-1)
+        return df
+    price_table = price_table.groupby('ticker').apply(lambda price: calculate_return(price))
+        
+    return_table = price_table[['date','ticker','return']].pivot(index = 'date', columns = 'ticker', values = 'return')
+    return return_table
+
+def US_EQUITY_collection(day):
+    holding_table = pd.read_csv("US_EQUITY_input.csv")
+    updated_table = gather_historical_quote(holding_table,day)
+    price_table = generate_price_table(updated_table)
+    price_table.to_csv("US_EQUITY_price_table.csv")
     print("US_EQUITY_price_table generated.")
+
+    return_table = generate_return_table(price_table)
+    return_table.to_csv('return_table.csv')
