@@ -1,13 +1,12 @@
 days = 1100 #days of data to collect
-days_modified = 365 #days of data to access volatility
-
+days_modified = 365 #days of data to use
 
 import US_EQUITY_COLLECTION
 import US_EQUITY_INI_PORTFOLIO
 
-if False:
+if True: # change to False to stop initialize portfolio from US_EQUITY_INI_PORTFOLIO.py
     US_EQUITY_INI_PORTFOLIO.initialize_portfolio()
-if False:
+if True: # change to False to stop collection of new data
     US_EQUITY_COLLECTION.US_EQUITY_collection(days)
 
 import pandas as pd

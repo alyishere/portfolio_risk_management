@@ -2,13 +2,17 @@
 
 Please edit ticker, weight, and initial investment in US_EQUITY_INI_PORTFOLIO.py file to generate portfolio. (Alternative: edit US_EQUITY_input.csv manually.)
 
-Run service to generate VAR data.
+Run service to generate VAR data (VCA and HSA are available at the moment).
+
+1 day to 2 week VAR at 95, 99, 99.1 confidence level will be saved as charts (e.g. VAR(XXX).jpg).
+
+Folder "normality check charts" will have charts for individual stocks in the portfolio to check whether they were normally distributed. 
 
 TO DO:
 
 1. Use json file as input
 
-2. Implement other VAR methods
+2. Implement other VAR methods (complete monte carlo and variants of HS)
 
 3. Work on CVAR, ES, etc.
 

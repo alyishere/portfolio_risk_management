@@ -81,6 +81,7 @@ def print_out_var_chart():
     plt.gcf().subplots_adjust(left=0.15)
 
     plt.savefig("VAR(VCA).jpg",dpi = 300)
+    plt.clf()
     #plt.show()
 
 def normality_check():
@@ -88,6 +89,11 @@ def normality_check():
     import scipy
     import matplotlib.mlab as mlab
     import matplotlib.pyplot as plt
+
+    import os
+    if not os.path.exists('normality check charts'):
+        os.makedirs('normality check charts')
+
     for stock in return_table.columns[1:]:
         return_table[stock].hist(bins=40, density=True,histtype="stepfilled",alpha=0.5)
         x = np.linspace(portfolio_avg_return - 3 * portfolio_stdev, portfolio_avg_return + 3 * portfolio_stdev,100)
