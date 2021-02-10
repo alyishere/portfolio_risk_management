@@ -22,4 +22,4 @@ TO DO:
 
 6. Integrate with my other project, portfolio_tracking
 
-*requires a token from Tradier Developer (Sandbox): https://developer.tradier.com/user/sign_up
+*requires a token from Tradier Developer (Sandbox): https://developer.tradier.com/user/sign_up . Save as tradier_token.txt
