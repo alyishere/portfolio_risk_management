@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 return_table = pd.read_csv('return_table_modified.csv').drop('Unnamed: 0',axis = 1).set_index('date')
-return_table
 
 holding_table = pd.read_csv("US_EQUITY_input.csv").set_index('TICKER').drop("Unnamed: 0",axis = 1)
 actual_investment = holding_table['ACTUAL_ALLOCATION'].sum()

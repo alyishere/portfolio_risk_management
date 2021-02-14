@@ -1,0 +1,26 @@
+{
+"default":
+    {
+    "type":"weight",
+    "ticker":
+        {
+        "USO":   0.25,
+        "MSFT": 0.3,
+        "SPY":  0.15,
+        "TSLA": 0.3  
+        },
+    "initial_investment": 1000000
+    },
+"portfolio_2":
+    {
+    "type":"share",
+    "ticker":
+        {
+        "WTI":  7,
+        "GS": 6,
+        "GLD":  10,
+        "USO": 2  
+        }
+    }
+}
+

@@ -1,5 +1,3 @@
-import US_EQUITY_COLLECTION
-import US_EQUITY_INI_PORTFOLIO
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
