@@ -4,7 +4,7 @@
     "type":"weight",
     "ticker":
         {
-        "USO":   0.25,
+        "GME":  0.25,
         "MSFT": 0.3,
         "SPY":  0.15,
         "TSLA": 0.3  

@@ -11,6 +11,7 @@ def read_load_out(loadout = 'default', file = 'ini.json'):
     ini = json.load(open(file))
     portfolio_json = ini[loadout]
     type = portfolio_json['type']
+    print("\nFile Loaded: \t\t",file,"\nPortfolio Loaded: \t",loadout)
     if type == 'weight':
         return (type,list(portfolio_json['ticker'].keys()),np.array(list(portfolio_json['ticker'].values())),portfolio_json['initial_investment'])
     if type == 'share':
