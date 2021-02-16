@@ -48,10 +48,9 @@ def US_EQUITY_collection(day):
     updated_table = gather_historical_quote(holding_table,day)
     price_table = generate_price_table(updated_table)
     price_table.to_csv("US_EQUITY_price_table.csv")
-    print('\n')
     print("US_EQUITY_price_table generated.")
 
     return_table = generate_return_table(price_table)
     return_table.to_csv('return_table.csv')
     print("US_EQUITY_return_table generated.")
-    print('\n')
+

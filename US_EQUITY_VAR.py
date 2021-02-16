@@ -22,14 +22,17 @@ actual_investment = holding_table['ACTUAL_ALLOCATION'].sum()
 # avg_return_investment = actual_investment * (1 + portfolio_avg_return)
 # stdev_investment = actual_investment * portfolio_stdev
 
-def print_parametric_input():
-    print("\nHolding Table")
-    print(holding_table)
-    print("\nActual Initial Investment: \t\t", round(actual_investment,4))
-    print("Portfolio Average Return: \t\t", round(portfolio_avg_return,6))
-    print("Portfolio stdev: \t\t\t", round(portfolio_stdev,6))
-    print("\nAverage Return\n", avg_return)
-    print("\nCovariance Matrix\n", cov_matrix)
+def parametric_input():
+    output_str = ''
+    output_str += "\nHolding Table\n"
+    output_str += str(holding_table)
+    output_str += "\nActual Initial Investment: \t" + str(round(actual_investment,4))
+    output_str += "\nPortfolio Average Return: \t" + str(round(portfolio_avg_return,6)) + "\tAnnualized: \t" + str(round((portfolio_avg_return+1)**252-1,6))
+    output_str += "\nPortfolio stdev: \t\t" + str(round(portfolio_stdev,6)) + "\tAnnualized: \t" + str(round(portfolio_stdev * np.sqrt(252),6))
+    output_str += "\n\nCovariance Matrix\n"
+    output_str += str(cov_matrix)
+    output_str += "\n\n"
+    return output_str
 
 def normality_check():
     #check whether the returns fell under normal distribution
