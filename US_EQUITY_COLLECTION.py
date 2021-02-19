@@ -1,56 +1,101 @@
 import pandas as pd
-import requests
 import time
 from datetime import datetime as dt
 import datetime
-from datetime import timezone
+import yfinance as yf
+import json
+import numpy as np
+import os
+import random
 
-def gather_historical_quote(holding_table,days):
+if not os.path.exists('cache'):
+    os.makedirs('cache')
+
+def read_load_out(loadout = 'default', file = 'ini.json'):
+    ini = json.load(open(file))
+    portfolio_json = ini[loadout]
+    type = portfolio_json['type']
+    #print("\nFile Loaded: \t\t",file,"\nPortfolio Loaded: \t",loadout)
+    if type == 'weight':
+        return (type,list(portfolio_json['ticker'].keys()),np.array(list(portfolio_json['ticker'].values())),portfolio_json['initial_investment'])
+    if type == 'share':
+        return (type,list(portfolio_json['ticker'].keys()),np.array(list(portfolio_json['ticker'].values())))
+
+def generate_ticker_list(tickers):
+    ticker_str = ""
+    for i in tickers:
+        ticker_str = ticker_str + " " + i 
+    ticker_list = ticker_str[1:]
+    return ticker_list
+
+def collect_data(days, ticker_list, orginal_list):
 
     end_date = dt.today()
-    start_date = end_date - datetime.timedelta(days = days)
-    token = open('tradier_token.txt','r').read()
-
-    def request_historicals(ticker,start_date,end_date):
-        response = requests.get('https://sandbox.tradier.com/v1/markets/history',
-            params={'symbol': ticker, 'interval': 'daily', 'start': start_date.strftime("%Y-%m-%d"), 'end': end_date.strftime("%Y-%m-%d")},
-            headers={'Authorization': 'Bearer '+token, 'Accept': 'application/json'}
-        )
-        json_response = response.json()
-        return json_response['history']['day']
-    holding_table['historical_quote'] = holding_table.apply(lambda ticker: request_historicals(ticker['TICKER'],start_date,end_date),axis = 1)
-    return holding_table
-
-def generate_price_table(df):
-    import pandas as pd
-    price_table = pd.DataFrame(columns=("ticker","open","high","low","close","volume"))
-    for i in df.index:
-        entry = df.loc[i,:]
-        current_df = pd.DataFrame(entry['historical_quote'])
-        current_df['ticker'] = entry['TICKER']
-        price_table = pd.concat([price_table,current_df],sort=True)
-    return price_table
-
-def generate_return_table(price_table):
+    start_date = end_date - datetime.timedelta(days = days + 2)
+    print("Collecting Data: (Please restart if unable to complete)")
     
-    price_table['date'] = price_table['date'].astype('datetime64') 
+    ## I stopped using yf.download() since Yahoo Finance has been interrupting mass data scrapping. yf.Ticker() & history is a much stabler in comparision. 
+    # data = yf.download(ticker_list, start=start_date.strftime("%Y-%m-%d"), end = end_date.strftime("%Y-%m-%d"),threads= False)
+    # data.fillna(method="ffill", inplace = True)
+    # data.dropna(inplace = True)
+    # price_table = data['Adj Close'][orginal_list]
 
-    def calculate_return(df):
-        df['return'] = (df['close']/df['close'].shift(1)-1)
-        return df
-    price_table = price_table.groupby('ticker').apply(lambda price: calculate_return(price))
-        
-    return_table = price_table[['date','ticker','return']].pivot(index = 'date', columns = 'ticker', values = 'return')
-    return return_table
+    ## The following is the looping yf.Ticker() & history approach.
+    dfs = []
+    for i in orginal_list:
+        ticker = yf.Ticker(i)
+        rnd_sec = random.randrange(5, 10) # throttling collection speed
+        #print('Sleeping for '+str(rnd_sec)+' secondes...')
+        time.sleep(rnd_sec)
+        df_ticker = ticker.history(start=start_date.strftime("%Y-%m-%d"), end = end_date.strftime("%Y-%m-%d"))['Close']
+        dfs.append(df_ticker.rename(i))
 
-def US_EQUITY_collection(day):
-    holding_table = pd.read_csv("US_EQUITY_input.csv")
-    updated_table = gather_historical_quote(holding_table,day)
-    price_table = generate_price_table(updated_table)
-    price_table.to_csv("US_EQUITY_price_table.csv")
-    print("US_EQUITY_price_table generated.")
+    data = pd.concat(dfs, axis=1)
+    data.fillna(method="ffill", inplace = True)
+    data.dropna(inplace = True)
+    price_table = data[orginal_list]
 
-    return_table = generate_return_table(price_table)
-    return_table.to_csv('return_table.csv')
-    print("US_EQUITY_return_table generated.")
+    return_table = (price_table/price_table.shift(1)-1)
+    return_table.fillna(0, inplace = True)
+    return_table = return_table.iloc[1:]
+    
+    price_table.to_csv('cache/price_table.csv')
+    return_table.to_csv('cache/return_table.csv')
+    return_table.to_csv('cache/return_table_modified.csv')
+    
+    print("price_table generated.")
+    print("return_table generated.")
+    return [price_table, return_table]
 
+def initialize_portfolio(loadout = 'default',file = 'ini.json',days = 365):
+
+    portfolio = read_load_out(loadout,file)
+    load_out_type = portfolio[0] 
+    tickers = portfolio[1]
+    weights = portfolio[2]
+    shares = portfolio[2]
+    initial_investment = 0
+    if load_out_type == 'weight':
+        initial_investment = portfolio[3]
+
+    ticker_list = generate_ticker_list(tickers)
+    data_list = collect_data(days, ticker_list, tickers)
+
+    current_quote_df = pd.DataFrame(data_list[0].iloc[-1]).reset_index()
+
+    current_quote_df.columns = ['TICKER','CURRENT_QUOTE']
+
+    if load_out_type == 'weight':
+        current_quote_df['TARGET_WEIGHT'] = weights
+        current_quote_df['TARGET_ALLOCATION'] = weights*initial_investment
+        current_quote_df['ACTUAL_SHARE'] = current_quote_df['TARGET_ALLOCATION']/current_quote_df['CURRENT_QUOTE']
+        current_quote_df['ACTUAL_SHARE'] = current_quote_df['ACTUAL_SHARE'].astype('int')
+    elif load_out_type == 'share':
+        current_quote_df['ACTUAL_SHARE'] = shares
+
+    current_quote_df['ACTUAL_ALLOCATION'] = current_quote_df['ACTUAL_SHARE'] * current_quote_df['CURRENT_QUOTE']
+    current_quote_df['ACTUAL_WEIGHT'] = current_quote_df['ACTUAL_ALLOCATION']/current_quote_df['ACTUAL_ALLOCATION'].sum()
+    
+    current_quote_df.to_csv('cache/portfolio.csv')
+
+    print('Portfolio initialized.')

@@ -1,7 +1,7 @@
 {
     "days":             1095,
     "days_modified":    1095,
-    "loadout_set":      "personal.json",
+    "loadout_set":      "ini.json",
     "loadout":          "default",
     "setup":            "True"
 }

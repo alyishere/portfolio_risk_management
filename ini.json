@@ -21,6 +21,16 @@
         "GLD":  10,
         "USO": 2  
         }
+    },
+"china_example_1":
+    {   
+    "type":"share",
+    "ticker":
+        {
+        "600519.SS":2,
+        "601318.SS":3
+        } 
     }
+
 }
 
